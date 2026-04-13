@@ -2,90 +2,170 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Arm Motion Controller</title>
+
+<title>Rehab Sensor Controller</title>
 
 <style>
+
 body{
-background:#111;
-color:white;
+margin:0;
 font-family:Arial;
-text-align:center;
-margin-top:40px;
+background:linear-gradient(180deg,#0c1330,#150c1a);
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
 }
 
-button{
-padding:15px 30px;
-font-size:18px;
-margin:10px;
-border-radius:8px;
-border:none;
-background:#00c3ff;
-color:black;
+.card{
+width:85%;
+max-width:420px;
+padding:30px;
+border-radius:25px;
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
+
+.status{
+display:inline-block;
+padding:10px 25px;
+border-radius:30px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.disconnected{
+background:#ff3d3d33;
+color:#ff4b4b;
+border:1px solid #ff4b4b;
+}
+
+.connected{
+background:#3cff7b33;
+color:#3cff7b;
+border:1px solid #3cff7b;
+}
+
+.title{
+font-size:18px;
+color:#3da3ff;
+margin-bottom:20px;
+}
+
+.big{
+font-size:70px;
+font-weight:bold;
+}
+
+.labels{
+display:flex;
+justify-content:space-around;
+margin-top:10px;
+opacity:0.7;
+}
+
+.accel{
+display:flex;
+justify-content:space-around;
+margin-top:30px;
+}
+
+.small{
+font-size:20px;
+}
+
+.footer{
+margin-top:30px;
+font-size:14px;
+opacity:0.6;
+}
+
 </style>
 </head>
 
 <body>
 
-<h2>Arm Motion Controller</h2>
+<div class="card">
 
-<button onclick="startSensor()">Start Sensor</button>
-<button onclick="calibrate()">Calibrate Arm</button>
+<div id="status" class="status disconnected">
+DISCONNECTED
+</div>
 
-<p>Pitch: <span id="pitch">0</span></p>
-<p>Roll: <span id="roll">0</span></p>
+<div class="title">
+LIVE ORIENTATION
+</div>
+
+<div class="big">
+<span id="pitch">0</span>
+<span id="roll">0</span>
+</div>
+
+<div class="labels">
+<span>PITCH</span>
+<span>ROLL</span>
+</div>
+
+<hr style="opacity:0.2;margin:25px 0">
+
+<div class="accel">
+
+<div>
+<div id="accelx" class="small">0</div>
+<div>ACCEL X</div>
+</div>
+
+<div>
+<div id="accely" class="small">0</div>
+<div>ACCEL Y</div>
+</div>
+
+<div>
+<div id="accelz" class="small">0</div>
+<div>ACCEL Z</div>
+</div>
+
+</div>
+
+<div class="footer">
+Mount this device on your limb.<br>
+Use Chrome or Safari for best results.
+</div>
+
+</div>
 
 <script>
 
 let socket = new WebSocket("wss://rehab-hub.onrender.com");
 
-let basePitch = 0;
-let baseRoll = 0;
+let status = document.getElementById("status");
+
+socket.onopen = ()=>{
+status.classList.remove("disconnected");
+status.classList.add("connected");
+status.innerText="CONNECTED";
+};
+
+socket.onclose = ()=>{
+status.classList.remove("connected");
+status.classList.add("disconnected");
+status.innerText="DISCONNECTED";
+};
 
 let lastSend = 0;
 
-function startSensor(){
+window.addEventListener("deviceorientation",(e)=>{
 
-if (typeof DeviceOrientationEvent.requestPermission === "function") {
+let pitch = e.beta || 0;
+let roll = e.gamma || 0;
 
-DeviceOrientationEvent.requestPermission().then(response => {
+document.getElementById("pitch").innerText =
+Math.round(pitch);
 
-if(response==="granted"){
-window.addEventListener("deviceorientation", handleSensor,true);
-}
-
-});
-
-}else{
-
-window.addEventListener("deviceorientation", handleSensor,true);
-
-}
-
-}
-
-function calibrate(){
-
-basePitch = currentPitch;
-baseRoll = currentRoll;
-
-console.log("Calibrated");
-
-}
-
-let currentPitch=0;
-let currentRoll=0;
-
-function handleSensor(e){
-
-currentPitch = e.beta || 0;
-currentRoll = e.gamma || 0;
-
-let pitch = currentPitch - basePitch;
-let roll = currentRoll - baseRoll;
-
-document.getElementById("pitch").innerText = pitch.toFixed(2);
-document.getElementById("roll").innerText = roll.toFixed(2);
+document.getElementById("roll").innerText =
+Math.round(roll);
 
 let now = Date.now();
 
@@ -98,7 +178,24 @@ pitch:pitch,
 roll:roll
 }));
 
-}
+});
+
+window.addEventListener("devicemotion",(e)=>{
+
+let acc = e.accelerationIncludingGravity;
+
+if(!acc) return;
+
+document.getElementById("accelx").innerText =
+acc.x.toFixed(2);
+
+document.getElementById("accely").innerText =
+acc.y.toFixed(2);
+
+document.getElementById("accelz").innerText =
+acc.z.toFixed(2);
+
+});
 
 </script>
 
