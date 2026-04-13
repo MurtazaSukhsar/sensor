@@ -9,24 +9,24 @@
 
 body{
 margin:0;
-font-family:Arial;
-background:linear-gradient(180deg,#0c1330,#150c1a);
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
 height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(180deg,#081233,#1b081c);
+font-family:Arial;
+color:white;
 }
 
 .card{
-width:85%;
+width:90%;
 max-width:420px;
-padding:30px;
+padding:35px;
 border-radius:25px;
 background:rgba(255,255,255,0.05);
-backdrop-filter:blur(10px);
+backdrop-filter:blur(12px);
 text-align:center;
-box-shadow:0 10px 30px rgba(0,0,0,0.5);
+box-shadow:0 15px 40px rgba(0,0,0,0.6);
 }
 
 .status{
@@ -35,27 +35,18 @@ padding:10px 25px;
 border-radius:30px;
 font-weight:bold;
 margin-bottom:20px;
-}
-
-.disconnected{
 background:#ff3d3d33;
-color:#ff4b4b;
 border:1px solid #ff4b4b;
-}
-
-.connected{
-background:#3cff7b33;
-color:#3cff7b;
-border:1px solid #3cff7b;
+color:#ff4b4b;
 }
 
 .title{
-font-size:18px;
 color:#3da3ff;
+font-size:18px;
 margin-bottom:20px;
 }
 
-.big{
+.values{
 font-size:70px;
 font-weight:bold;
 }
@@ -63,22 +54,18 @@ font-weight:bold;
 .labels{
 display:flex;
 justify-content:space-around;
-margin-top:10px;
 opacity:0.7;
+margin-bottom:20px;
 }
 
 .accel{
 display:flex;
 justify-content:space-around;
-margin-top:30px;
-}
-
-.small{
-font-size:20px;
+margin-top:20px;
 }
 
 .footer{
-margin-top:30px;
+margin-top:25px;
 font-size:14px;
 opacity:0.6;
 }
@@ -86,13 +73,19 @@ opacity:0.6;
 </style>
 </head>
 
+<body>
+
+<div class="card">
+
+<div class="status" id="status">
+DISCONNECTED
 </div>
 
 <div class="title">
 LIVE ORIENTATION
 </div>
 
-<div class="big">
+<div class="values">
 <span id="pitch">0</span>
 <span id="roll">0</span>
 </div>
@@ -102,22 +95,22 @@ LIVE ORIENTATION
 <span>ROLL</span>
 </div>
 
-<hr style="opacity:0.2;margin:25px 0">
+<hr style="opacity:0.2">
 
 <div class="accel">
 
 <div>
-<div id="accelx" class="small">0</div>
+<div id="accelx">0</div>
 <div>ACCEL X</div>
 </div>
 
 <div>
-<div id="accely" class="small">0</div>
+<div id="accely">0</div>
 <div>ACCEL Y</div>
 </div>
 
 <div>
-<div id="accelz" class="small">0</div>
+<div id="accelz">0</div>
 <div>ACCEL Z</div>
 </div>
 
@@ -137,18 +130,14 @@ let socket = new WebSocket("wss://rehab-hub.onrender.com");
 let status = document.getElementById("status");
 
 socket.onopen = ()=>{
-status.classList.remove("disconnected");
-status.classList.add("connected");
 status.innerText="CONNECTED";
+status.style.color="#3cff7b";
+status.style.borderColor="#3cff7b";
 };
 
 socket.onclose = ()=>{
-status.classList.remove("connected");
-status.classList.add("disconnected");
 status.innerText="DISCONNECTED";
 };
-
-let lastSend = 0;
 
 window.addEventListener("deviceorientation",(e)=>{
 
@@ -161,12 +150,6 @@ Math.round(pitch);
 document.getElementById("roll").innerText =
 Math.round(roll);
 
-let now = Date.now();
-
-if(now-lastSend<30) return;
-
-lastSend=now;
-
 socket.send(JSON.stringify({
 pitch:pitch,
 roll:roll
@@ -176,18 +159,18 @@ roll:roll
 
 window.addEventListener("devicemotion",(e)=>{
 
-let acc = e.accelerationIncludingGravity;
+let a = e.accelerationIncludingGravity;
 
-if(!acc) return;
+if(!a) return;
 
 document.getElementById("accelx").innerText =
-acc.x.toFixed(2);
+a.x.toFixed(2);
 
 document.getElementById("accely").innerText =
-acc.y.toFixed(2);
+a.y.toFixed(2);
 
 document.getElementById("accelz").innerText =
-acc.z.toFixed(2);
+a.z.toFixed(2);
 
 });
 
