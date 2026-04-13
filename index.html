@@ -1,45 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Sensor Controller</title>
+
+<style>
+body{
+font-family: Arial;
+text-align:center;
+margin-top:40px;
+background:#111;
+color:white;
+}
+
+button{
+padding:15px 30px;
+font-size:20px;
+border:none;
+border-radius:8px;
+background:#00c3ff;
+color:black;
+}
+
+.data{
+margin-top:20px;
+font-size:22px;
+}
+</style>
+
 </head>
 
 <body>
 
-<h2>Sensor Controller</h2>
+<h1>Phone Sensor Controller</h1>
+
 <button onclick="startSensor()">Start Sensor</button>
+
+<div class="data">
+Pitch: <span id="pitch">0</span><br>
+Roll: <span id="roll">0</span>
+</div>
 
 <script>
 
 let socket = new WebSocket("wss://rehab-hub.onrender.com");
 
+socket.onopen = () => {
+console.log("Connected to WebSocket server");
+};
+
+socket.onerror = (e) => {
+console.log("WebSocket error", e);
+};
+
+let lastSend = 0;
+
 function startSensor(){
 
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+if (typeof DeviceOrientationEvent.requestPermission === "function") {
 
-    DeviceOrientationEvent.requestPermission()
-      .then(permissionState => {
+DeviceOrientationEvent.requestPermission().then(response => {
 
-        if (permissionState === 'granted') {
-          window.addEventListener("deviceorientation", sendSensor);
-        }
+if (response === "granted") {
+window.addEventListener("deviceorientation", handleSensor, true);
+}
 
-      });
+});
 
-  } else {
+} else {
 
-    window.addEventListener("deviceorientation", sendSensor);
-
-  }
+window.addEventListener("deviceorientation", handleSensor, true);
 
 }
 
-function sendSensor(e){
+}
 
-  socket.send(JSON.stringify({
-    pitch: e.beta,
-    roll: e.gamma
-  }));
+function handleSensor(e){
+
+let pitch = e.beta || 0;
+let roll = e.gamma || 0;
+
+document.getElementById("pitch").innerText = pitch.toFixed(2);
+document.getElementById("roll").innerText = roll.toFixed(2);
+
+let now = Date.now();
+
+if(now - lastSend < 30) return;
+
+lastSend = now;
+
+socket.send(JSON.stringify({
+pitch:pitch,
+roll:roll
+}));
 
 }
 
