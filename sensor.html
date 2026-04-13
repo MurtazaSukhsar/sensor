@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sensor Controller</title>
+</head>
+
+<body>
+
+<h2>Sensor Controller</h2>
+<button onclick="startSensor()">Start Sensor</button>
+
+<script>
+
+let socket = new WebSocket("wss://rehab-hub.onrender.com");
+
+function startSensor(){
+
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+
+    DeviceOrientationEvent.requestPermission()
+      .then(permissionState => {
+
+        if (permissionState === 'granted') {
+          window.addEventListener("deviceorientation", sendSensor);
+        }
+
+      });
+
+  } else {
+
+    window.addEventListener("deviceorientation", sendSensor);
+
+  }
+
+}
+
+function sendSensor(e){
+
+  socket.send(JSON.stringify({
+    pitch: e.beta,
+    roll: e.gamma
+  }));
+
+}
+
+</script>
+
+</body>
+</html>
