@@ -1,59 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Sensor Controller</title>
+<title>Arm Motion Controller</title>
 
 <style>
 body{
-font-family: Arial;
-text-align:center;
-margin-top:40px;
 background:#111;
 color:white;
+font-family:Arial;
+text-align:center;
+margin-top:40px;
 }
 
 button{
 padding:15px 30px;
-font-size:20px;
-border:none;
+font-size:18px;
+margin:10px;
 border-radius:8px;
+border:none;
 background:#00c3ff;
 color:black;
 }
-
-.data{
-margin-top:20px;
-font-size:22px;
-}
 </style>
-
 </head>
 
 <body>
 
-<h1>Phone Sensor Controller</h1>
+<h2>Arm Motion Controller</h2>
 
 <button onclick="startSensor()">Start Sensor</button>
+<button onclick="calibrate()">Calibrate Arm</button>
 
-<div class="data">
-Pitch: <span id="pitch">0</span><br>
-Roll: <span id="roll">0</span>
-</div>
+<p>Pitch: <span id="pitch">0</span></p>
+<p>Roll: <span id="roll">0</span></p>
 
 <script>
 
 let socket = new WebSocket("wss://rehab-hub.onrender.com");
 
-socket.onopen = () => {
-console.log("Connected to WebSocket server");
-};
-
-socket.onerror = (e) => {
-console.log("WebSocket error", e);
-};
+let basePitch = 0;
+let baseRoll = 0;
 
 let lastSend = 0;
 
@@ -63,33 +50,48 @@ if (typeof DeviceOrientationEvent.requestPermission === "function") {
 
 DeviceOrientationEvent.requestPermission().then(response => {
 
-if (response === "granted") {
-window.addEventListener("deviceorientation", handleSensor, true);
+if(response==="granted"){
+window.addEventListener("deviceorientation", handleSensor,true);
 }
 
 });
 
-} else {
+}else{
 
-window.addEventListener("deviceorientation", handleSensor, true);
+window.addEventListener("deviceorientation", handleSensor,true);
+
+}
 
 }
 
+function calibrate(){
+
+basePitch = currentPitch;
+baseRoll = currentRoll;
+
+console.log("Calibrated");
+
 }
+
+let currentPitch=0;
+let currentRoll=0;
 
 function handleSensor(e){
 
-let pitch = e.beta || 0;
-let roll = e.gamma || 0;
+currentPitch = e.beta || 0;
+currentRoll = e.gamma || 0;
+
+let pitch = currentPitch - basePitch;
+let roll = currentRoll - baseRoll;
 
 document.getElementById("pitch").innerText = pitch.toFixed(2);
 document.getElementById("roll").innerText = roll.toFixed(2);
 
 let now = Date.now();
 
-if(now - lastSend < 30) return;
+if(now-lastSend<30) return;
 
-lastSend = now;
+lastSend=now;
 
 socket.send(JSON.stringify({
 pitch:pitch,
